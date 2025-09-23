@@ -44,13 +44,14 @@ export async function GET(req: NextRequest) {
 
   const { searchParams } = new URL(req.url);
   const q = searchParams.get("q") ?? "";
-  const limitParam = parseInt(searchParams.get("limit") || "20", 10);
-  const limit = Math.min(Math.max(limitParam, 1), 100);
+  const limitParam = parseInt(searchParams.get("limit") || "20", 100);
+  const limit = Math.min(Math.max(limitParam, 1), 1000);
   const cursor = searchParams.get("cursor"); // ISO timestamp
 
   let query = supabase
     .from("records")
     .select("*")
+    .eq("prnk", 1) 
     .order("id", { ascending: true })
     .limit(limit + 1);
 
@@ -64,7 +65,7 @@ export async function GET(req: NextRequest) {
   const page = hasMore ? data!.slice(0, limit) : data!;
   const nextCursor = hasMore ? page[page.length - 1].id : null;
 
-  return NextResponse.json({ categories: page, nextCursor });
+  return NextResponse.json({ records: page, nextCursor });
 }
 
 /**
