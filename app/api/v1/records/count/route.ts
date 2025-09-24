@@ -23,20 +23,20 @@ function requireApiKey(req: NextRequest) {
   return null;
 }
 
-// GET /api/v1/records/count?product=&prnkOnly=1
+// GET /api/v1/records/count?q=&prnkOnly=1
 export async function GET(req: NextRequest) {
   const authErr = requireApiKey(req);
   if (authErr) return authErr;
 
   const { searchParams } = new URL(req.url);
-  const q = searchParams.get("product") ?? "";
+  const q = searchParams.get("q") ?? "";
   const prnkOnly = searchParams.get("prnkOnly") === "1"; // optional toggle
 
   let query = supabase
     .from("records")
     .select("*", { count: "exact", head: true }); // head=true avoids row data
 
-  if (q) query = query.ilike("product", `%${q}%`);
+  if (q) query = query.ilike("name", `%${q}%`);
   if (prnkOnly) query = query.eq("prnk", 1);
 
   const { count, error } = await query;
