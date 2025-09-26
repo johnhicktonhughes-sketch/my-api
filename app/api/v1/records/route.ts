@@ -52,9 +52,9 @@ export async function GET(req: NextRequest) {
   let query = supabase
     .from("records")
     // ONLY these two columns:
-    .select("recordid,total_value")
+    .select("record_id,total_value")
     // keep a stable order for keyset pagination:
-    .order("recordid", { ascending: true })
+    .order("record_id", { ascending: true })
     .limit(limit + 1);
 
   // q across product
@@ -83,7 +83,7 @@ export async function GET(req: NextRequest) {
 
   // Keyset pagination: fetch records with recordid > cursor
   if (cursor !== undefined && !Number.isNaN(cursor)) {
-    query = query.gt("recordid", cursor);
+    query = query.gt("record_id", cursor);
   }
 
   const { data, error } = await query;
