@@ -45,7 +45,7 @@ export async function GET(req: NextRequest) {
   const productLike = searchParams.get("productLike");
 
   const limitParam = parseInt(searchParams.get("limit") || "20", 10);
-  const limit = Math.min(Math.max(limitParam, 1), 1000) ;
+  const limit = Math.min(Math.max(limitParam, 1), 10000) ;
   const cursorParam = searchParams.get("cursor");
   const cursor = cursorParam ? Number(cursorParam) : undefined;
 
