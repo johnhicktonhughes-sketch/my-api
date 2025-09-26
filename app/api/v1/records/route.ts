@@ -32,75 +32,66 @@ function requireApiKey(req: NextRequest) {
   return null;
 }
 
-/**
- * GET /api/v1/categories?q=&limit=&cursor=
- * - q: optional search by name (case-insensitive)
- * - limit: 1..100 (default 20)
- * - cursor: ISO timestamp for keyset pagination by created_at (older than cursor)
- */
+// GET /api/v1/records?q=&prnkOnly=1&product=&productLike=&limit=&cursor=
 export async function GET(req: NextRequest) {
   const authErr = requireApiKey(req);
   if (authErr) return authErr;
 
   const { searchParams } = new URL(req.url);
-  const q = searchParams.get("q") ?? "";
-  const limitParam = parseInt(searchParams.get("limit") || "20", 100);
-  const limit = Math.min(Math.max(limitParam, 1), 1000);
-  const cursor = searchParams.get("cursor"); // ISO timestamp
+  const q = (searchParams.get("q") ?? "").trim();
+  const prnkOnly = searchParams.get("prnkOnly") === "1";
+
+  const product = searchParams.get("product");
+  const productLike = searchParams.get("productLike");
+
+  const limitParam = parseInt(searchParams.get("limit") || "20", 10);
+  const limit = Math.min(Math.max(limitParam, 1), 100);
+  const cursorParam = searchParams.get("cursor");
+  const cursor = cursorParam ? Number(cursorParam) : undefined;
 
   let query = supabase
     .from("records")
-    .select("*")
-    .eq("prnk", 1) 
-    .order("id", { ascending: true })
+    // ONLY these two columns:
+    .select("recordid,total_value")
+    // keep a stable order for keyset pagination:
+    .order("recordid", { ascending: true })
     .limit(limit + 1);
 
-  if (q) query = query.ilike("name", `%${q}%`);
-  if (cursor) query = query.lt("id", cursor);
+  // q across product
+  if (q) {
+    const like = `%${q}%`;
+    const enc = encodeURIComponent(like);
+    query = query.or(`product.ilike.${enc}`);
+  }
+
+  if (prnkOnly) {
+    query = query.eq("prnk", 1);
+  }
+
+  // Product filters (optional)
+  if (productLike) {
+    query = query.ilike("product", `%${productLike}%`);
+  } else if (product) {
+    const repeated = searchParams.getAll("product");
+    const list =
+      repeated.length > 1
+        ? repeated
+        : product.split(",").map(s => s.trim()).filter(Boolean);
+    if (list.length === 1) query = query.eq("product", list[0]);
+    else if (list.length > 1) query = query.in("product", list);
+  }
+
+  // Keyset pagination: fetch records with recordid > cursor
+  if (cursor !== undefined && !Number.isNaN(cursor)) {
+    query = query.gt("recordid", cursor);
+  }
 
   const { data, error } = await query;
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   const hasMore = (data?.length ?? 0) > limit;
-  const page = hasMore ? data!.slice(0, limit) : data!;
-  const nextCursor = hasMore ? page[page.length - 1].id : null;
+  const page = hasMore ? data!.slice(0, limit) : (data ?? []);
+  const nextCursor = hasMore ? page[page.length - 1].recordid : null;
 
   return NextResponse.json({ records: page, nextCursor });
-}
-
-/**
- * POST /api/v1/categories
- * body: { name: string, description?: string }
- */
-export async function POST(req: NextRequest) {
-  const authErr = requireApiKey(req);
-  if (authErr) return authErr;
-
-  const body = await req.json().catch(() => ({}));
-  const name = typeof body?.name === "string" ? body.name.trim() : "";
-  const description =
-    typeof body?.description === "string" ? body.description : null;
-
-  if (!name || name.length > 64) {
-    return NextResponse.json(
-      { error: "name is required and must be <= 64 characters" },
-      { status: 400 }
-    );
-  }
-
-  const { data, error } = await supabase
-    .from("records")
-    .insert({ name, description })
-    .select("*")
-    .single();
-
-  if (error) {
-    // Handle unique name violation nicely
-    if (String(error.message).toLowerCase().includes("duplicate")) {
-      return NextResponse.json({ error: "Category name already exists" }, { status: 409 });
-    }
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-
-  return NextResponse.json(data, { status: 201 });
 }
