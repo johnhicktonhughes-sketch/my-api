@@ -51,7 +51,7 @@ export async function GET(req: NextRequest) {
   let query = supabase
     .from("subcategories")
     .select("*")
-    .order("created_at", { ascending: false })
+    .order("id", { ascending: true })
     .limit(limit + 1); // +1 to detect hasMore
 
   if (q) query = query.ilike("name", `%${q}%`);
