@@ -91,7 +91,7 @@ export async function GET(req: NextRequest) {
 
   const hasMore = (data?.length ?? 0) > limit;
   const page = hasMore ? data!.slice(0, limit) : (data ?? []);
-  const nextCursor = hasMore ? page[page.length - 1].recordid : null;
+  const nextCursor = hasMore ? page[page.length - 1].record_id : null;
 
   return NextResponse.json({ records: page, nextCursor });
 }
