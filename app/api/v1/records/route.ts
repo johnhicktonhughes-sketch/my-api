@@ -52,7 +52,7 @@ export async function GET(req: NextRequest) {
   let query = supabase
     .from("records")
     // ONLY these two columns:
-    .select("record_id,total_value")
+    .select("*")
     // keep a stable order for keyset pagination:
     .order("record_id", { ascending: true })
     .limit(limit + 1);
