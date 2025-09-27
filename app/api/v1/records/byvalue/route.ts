@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
     .eq("prnk", 1)
     .gte("sell", minSell)
     .lte("sell", maxSell)
-    .order("total_value", { ascending: true });
+    .order("total_value", { ascending: false });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
