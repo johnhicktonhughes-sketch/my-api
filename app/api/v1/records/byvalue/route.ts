@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
     .eq("prnk", 1)
     .gte("sell", minSell)
     .lte("sell", maxSell)
-    .order("total_value", { ascending: true });
+    .order("total_value", { ascending: false });
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -78,5 +78,5 @@ export async function POST(req: NextRequest) {
     total_value: r.total_value,
   }));
 
-  return NextResponse.json({ results });
+  return NextResponse.json({ results, number_of_results: results.length });
 }
