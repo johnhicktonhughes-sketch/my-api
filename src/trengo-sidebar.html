@@ -1,0 +1,29 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Trengo Sidebar</title>
+    <style>
+      body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 0; padding: 16px; }
+      .card { border: 1px solid #eee; border-radius: 12px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,.05); }
+      h1 { font-size: 18px; margin: 0 0 8px; }
+      p { margin: 0; font-size: 14px; }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <h1 id="title">Hello, world!</h1>
+      <p id="ticket"></p>
+    </div>
+
+    <script>
+      // Read the ticket_id from the query string Trengo adds, e.g. ?ticket_id=12345
+      const params = new URLSearchParams(window.location.search);
+      const ticketId = params.get("ticket_id");
+
+      document.getElementById("ticket").textContent =
+        ticketId ? `Ticket #${ticketId}` : "No ticket_id provided.";
+    </script>
+  </body>
+</html>
